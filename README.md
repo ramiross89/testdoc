@@ -25,10 +25,10 @@ Web app en React JS para el perfil profesional de un médico cirujano. El sitio 
 │   ├── config
 │   │   └── environment.js
 │   └── main.jsx
-├── .env.development
-├── .env.staging
-├── .env.production
 ├── .env.example
+├── .github
+│   └── workflows
+│       └── ci-cd.yml
 ├── AGENTS.md
 └── README.md
 ```
@@ -63,15 +63,15 @@ vite --host 0.0.0.0
 
 ## Ambientes
 
-El proyecto maneja tres ambientes con archivos `.env` específicos:
+El proyecto maneja tres pasos operativos:
 
-```text
-.env.development
-.env.staging
-.env.production
-```
+- `development`: ambiente local predeterminado para abrir y trabajar el proyecto.
+- `staging`: revisión previa a producción.
+- `production`: build final publicado desde `main`.
 
-También existe `.env.example` como plantilla pública. Los archivos `.env.local` y `.env.*.local` están ignorados por Git y deben usarse para valores privados o ajustes de una máquina específica.
+Solo `staging` y `production` son ambientes de CI/CD. `development` vive en la máquina del desarrollador y no despliega nada.
+
+No se versionan archivos `.env` reales. Existe `.env.example` como plantilla pública para desarrollo local, y cualquier archivo `.env` local queda ignorado por Git.
 
 ### Variables disponibles
 
@@ -92,11 +92,16 @@ Regla importante: no guardar secretos, tokens ni llaves privadas en variables `V
 
 ### Development
 
-Uso local diario:
+Al abrir el proyecto, el desarrollador debe trabajar en ambiente local:
 
 ```bash
 npm run dev
-npm run build:development
+```
+
+Opcionalmente puede usar el alias explícito:
+
+```bash
+npm run dev:development
 ```
 
 Este ambiente usa:
@@ -106,13 +111,16 @@ VITE_APP_ENV=development
 VITE_APP_URL=http://localhost:5173
 ```
 
+`development` es para trabajo local y no activa despliegues de GitHub Actions.
+
 ### Staging
 
-Uso para revisión previa a producción:
+Cuando el desarrollador lo requiera específicamente, sube sus cambios a `staging`:
 
 ```bash
 npm run dev:staging
 npm run build:staging
+git push origin HEAD:staging
 ```
 
 Este ambiente usa:
@@ -124,11 +132,14 @@ VITE_APP_URL=https://staging.dravarela.mx
 
 ### Production
 
-Uso para el build final:
+Después de aprobar cambios en `staging`, se promueven a producción fusionando hacia `main`:
 
 ```bash
 npm run build
 npm run build:production
+git checkout main
+git merge staging
+git push origin main
 ```
 
 Este ambiente usa:
@@ -143,6 +154,50 @@ La app centraliza la lectura de variables en:
 ```text
 src/config/environment.js
 ```
+
+## Flujo De Ramas
+
+```text
+development/local -> staging -> main
+```
+
+- `development`: trabajo local y commits de desarrollo. No debe activar despliegue.
+- `staging`: rama de revisión. Solo se actualiza cuando el desarrollador lo pide explícitamente.
+- `main`: rama de producción. Solo se actualiza después de aprobar los cambios en `staging`.
+
+Comandos recomendados:
+
+```bash
+git status
+npm run build:staging
+npm run build:production
+```
+
+## CI/CD
+
+El pipeline vive en:
+
+```text
+.github/workflows/ci-cd.yml
+```
+
+Ambientes de GitHub Actions:
+
+- `staging`: se ejecuta en push a la rama `staging` o manualmente con `target_environment=staging`.
+- `production`: se ejecuta en push a la rama `main` o manualmente con `target_environment=production`.
+
+Validaciones:
+
+- Pull requests hacia `staging` ejecutan `npm run build:staging`.
+- Pull requests hacia `main` ejecutan `npm run build:production`.
+- Los builds de ambiente suben el directorio `dist/` como artifact.
+- La rama `development` no dispara despliegues.
+
+Buenas prácticas:
+
+- Configurar reglas de protección para el ambiente `production` en GitHub antes de conectar un despliegue real.
+- Mantener secretos fuera de variables `VITE_`.
+- Usar ramas separadas: `staging` para revisión previa y `main` para producción.
 
 ## Build de producción
 
@@ -311,8 +366,9 @@ git push origin main
 node_modules/
 dist/
 .DS_Store
-.env.local
-.env.*.local
+.env
+.env.*
+!.env.example
 ```
 
 No subir `node_modules` ni `dist` salvo que cambie la estrategia de despliegue.
@@ -323,6 +379,6 @@ No subir `node_modules` ni `dist` salvo que cambie la estrategia de despliegue.
 - Evitar mezclar lógica compleja en CSS; la interacción debe vivir en React.
 - Mantener cambios visuales dentro de `src/App.css`.
 - Mantener datos editables como arreglos en la parte superior de `src/App.jsx`.
-- Mantener configuración de ambientes en `src/config/environment.js` y archivos `.env.*`.
+- Mantener configuración de ambientes en `src/config/environment.js`, `.env.example` y GitHub Actions.
 - Ejecutar `npm run build` antes de hacer commit.
 - Probar visualmente en desktop y móvil cuando se cambien layouts.

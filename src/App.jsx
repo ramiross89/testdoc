@@ -35,16 +35,40 @@ const timeline = [
     year: "2006",
     title: "Médico cirujano",
     detail: "Universidad Nacional Autónoma de México.",
+    achievements: [
+      "Completó su formación médica con enfoque en diagnóstico clínico, anatomía quirúrgica y atención integral del paciente.",
+      "Participó en rotaciones hospitalarias de urgencias, medicina interna y cirugía, consolidando criterio para casos complejos.",
+    ],
+    goals: [
+      "Construir una base clínica sólida para tomar decisiones seguras en quirófano.",
+      "Orientar su práctica hacia una comunicación clara con pacientes y familiares.",
+    ],
   },
   {
     year: "2011",
     title: "Especialidad en cirugía general",
     detail: "Hospital de Alta Especialidad, Ciudad de México.",
+    achievements: [
+      "Desarrolló experiencia en cirugía abdominal, manejo perioperatorio y resolución de urgencias quirúrgicas.",
+      "Participó en equipos multidisciplinarios para optimizar seguridad, tiempos quirúrgicos y recuperación hospitalaria.",
+    ],
+    goals: [
+      "Dominar procedimientos de cirugía general con estándares hospitalarios de alta especialidad.",
+      "Fortalecer protocolos de valoración preoperatoria y seguimiento postoperatorio.",
+    ],
   },
   {
     year: "2017",
     title: "Fellowship en mínima invasión",
     detail: "Entrenamiento avanzado en técnicas laparoscópicas.",
+    achievements: [
+      "Perfeccionó técnicas laparoscópicas para reducir trauma quirúrgico, dolor y tiempos de recuperación.",
+      "Integró tecnología y planeación quirúrgica avanzada en procedimientos digestivos y de pared abdominal.",
+    ],
+    goals: [
+      "Ofrecer alternativas mínimamente invasivas cuando el caso clínico lo permite.",
+      "Impulsar una recuperación más cómoda, segura y acompañada para cada paciente.",
+    ],
   },
 ];
 
@@ -71,6 +95,7 @@ const clinicSlides = [
 
 function App() {
   const [expandedService, setExpandedService] = useState(null);
+  const [expandedTimeline, setExpandedTimeline] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const [formStatus, setFormStatus] = useState(null);
   const [formErrors, setFormErrors] = useState({});
@@ -88,6 +113,10 @@ function App() {
     setExpandedService((currentService) =>
       currentService === title ? null : title
     );
+  };
+
+  const toggleTimeline = (year) => {
+    setExpandedTimeline((currentYear) => (currentYear === year ? null : year));
   };
 
   const handleContactSubmit = (event) => {
@@ -234,10 +263,45 @@ function App() {
         <div className="timeline">
           {timeline.map((item) => (
             <article className="timeline-item" key={item.year}>
-              <span>{item.year}</span>
-              <div>
-                <h3>{item.title}</h3>
-                <p>{item.detail}</p>
+              <button
+                className="timeline-trigger"
+                type="button"
+                aria-expanded={expandedTimeline === item.year}
+                aria-controls={`timeline-${item.year}`}
+                onClick={() => toggleTimeline(item.year)}
+              >
+                <span className="timeline-year">{item.year}</span>
+                <span className="timeline-summary">
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </span>
+                <span className="timeline-icon" aria-hidden="true">
+                  {expandedTimeline === item.year ? "-" : "+"}
+                </span>
+              </button>
+              <div
+                className="timeline-details"
+                id={`timeline-${item.year}`}
+                aria-hidden={expandedTimeline !== item.year}
+              >
+                <div className="timeline-details-inner">
+                  <div>
+                    <h3>Logros</h3>
+                    <ul>
+                      {item.achievements.map((achievement) => (
+                        <li key={achievement}>{achievement}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3>Metas logradas</h3>
+                    <ul>
+                      {item.goals.map((goal) => (
+                        <li key={goal}>{goal}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </div>
             </article>
           ))}

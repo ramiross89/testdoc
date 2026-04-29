@@ -319,17 +319,115 @@ h3 {
 }
 
 .timeline-item {
-  align-items: start;
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 90px 1fr;
-  padding: 24px;
+  overflow: hidden;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.timeline-item span {
+.timeline-item:has(.timeline-trigger[aria-expanded="true"]) {
+  border-color: rgba(14, 107, 97, 0.35);
+  box-shadow: 0 18px 50px rgba(24, 41, 37, 0.1);
+}
+
+.timeline-trigger {
+  align-items: start;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 90px 1fr 32px;
+  padding: 24px;
+  text-align: left;
+  width: 100%;
+}
+
+.timeline-trigger:focus-visible {
+  outline: 3px solid rgba(14, 107, 97, 0.28);
+  outline-offset: -3px;
+}
+
+.timeline-year {
   color: #0e6b61;
   font-size: 1.2rem;
   font-weight: 900;
+}
+
+.timeline-summary {
+  display: grid;
+  gap: 8px;
+}
+
+.timeline-summary strong {
+  color: #14251f;
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+.timeline-summary span {
+  color: #52625e;
+  line-height: 1.65;
+}
+
+.timeline-icon {
+  align-items: center;
+  background: #f1d2bf;
+  border-radius: 999px;
+  color: #8b3f24;
+  display: inline-flex;
+  font-weight: 900;
+  height: 28px;
+  justify-content: center;
+  justify-self: end;
+  width: 28px;
+}
+
+.timeline-trigger[aria-expanded="true"] .timeline-icon {
+  background: #0e6b61;
+  color: #fff;
+}
+
+.timeline-details {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 320ms ease,
+    opacity 240ms ease;
+}
+
+.timeline-trigger[aria-expanded="true"] + .timeline-details {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.timeline-details-inner {
+  border-top: 1px solid rgba(21, 35, 31, 0.1);
+  display: grid;
+  gap: 22px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 24px 24px 134px;
+}
+
+.timeline-details h3 {
+  color: #0e6b61;
+  font-size: 0.86rem;
+  margin: 22px 0 12px;
+  text-transform: uppercase;
+}
+
+.timeline-details ul {
+  color: #52625e;
+  line-height: 1.65;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.timeline-details li + li {
+  margin-top: 10px;
 }
 
 .timeline-item p {
@@ -501,6 +599,19 @@ h3 {
 
   .timeline-item {
     grid-template-columns: 1fr;
+  }
+
+  .timeline-trigger {
+    grid-template-columns: 1fr auto;
+  }
+
+  .timeline-year {
+    grid-column: 1 / -1;
+  }
+
+  .timeline-details-inner {
+    grid-template-columns: 1fr;
+    padding: 0 24px 24px;
   }
 
   .map-panel,
