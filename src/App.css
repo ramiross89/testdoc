@@ -436,10 +436,70 @@ h3 {
 
 .contact-band {
   align-items: center;
-  background: #dbe9e6;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(16, 33, 29, 0.78),
+      rgba(14, 107, 97, 0.42)
+    ),
+    url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85");
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  --meadow-bg-x: 0px;
+  --meadow-bg-y: 0px;
+  --meadow-pointer-x: 0px;
+  --meadow-pointer-y: 0px;
+  --meadow-scroll-y: 0px;
   display: grid;
   gap: clamp(26px, 5vw, 70px);
   grid-template-columns: minmax(0, 1fr) minmax(290px, 440px);
+  isolation: isolate;
+  min-height: 560px;
+  overflow: hidden;
+  position: relative;
+}
+
+.contact-band::before {
+  background: inherit;
+  background-attachment: fixed;
+  background-position:
+    calc(50% + var(--meadow-bg-x))
+    calc(52% + var(--meadow-bg-y));
+  background-size: cover;
+  content: "";
+  inset: -12% 0;
+  position: absolute;
+  transform: translate3d(
+      var(--meadow-pointer-x),
+      calc(var(--meadow-scroll-y) + var(--meadow-pointer-y)),
+      0
+    )
+    scale(1.08);
+  transition:
+    background-position 220ms ease-out,
+    transform 220ms ease-out;
+  z-index: -2;
+}
+
+.contact-band::after {
+  background: rgba(245, 241, 234, 0.18);
+  content: "";
+  inset: 0;
+  position: absolute;
+  z-index: -1;
+}
+
+.contact-band > * {
+  position: relative;
+  z-index: 1;
+}
+
+.contact-band .eyebrow,
+.contact-band h2,
+.contact-band > div:first-child p {
+  color: #fffdf9;
+  text-shadow: 0 2px 18px rgba(16, 33, 29, 0.28);
 }
 
 .contact-card {
@@ -617,6 +677,18 @@ h3 {
   .map-panel,
   .map-panel iframe {
     min-height: 380px;
+  }
+
+  .contact-band,
+  .contact-band::before {
+    background-attachment: scroll;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-band::before {
+    transform: none;
+    transition: none;
   }
 }
 
