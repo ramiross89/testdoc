@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { contactLinks, environment, mapConfig } from "./config/environment";
 
 const highlights = [
@@ -94,6 +94,7 @@ const clinicSlides = [
 ];
 
 function App() {
+  const contactBandRef = useRef(null);
   const [expandedService, setExpandedService] = useState(null);
   const [expandedTimeline, setExpandedTimeline] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -109,6 +110,49 @@ function App() {
     return () => window.clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const contactBand = contactBandRef.current;
+
+    if (!contactBand) {
+      return undefined;
+    }
+
+    let animationFrame = 0;
+
+    const updateScrollParallax = () => {
+      const rect = contactBand.getBoundingClientRect();
+      const viewportCenter = window.innerHeight / 2;
+      const sectionCenter = rect.top + rect.height / 2;
+      const scrollProgress = (viewportCenter - sectionCenter) / viewportCenter;
+      const clampedProgress = Math.max(-1, Math.min(1, scrollProgress));
+      const scrollOffset = Math.round(clampedProgress * 42);
+
+      contactBand.style.setProperty(
+        "--meadow-scroll-y",
+        `${scrollOffset}px`
+      );
+      contactBand.style.setProperty(
+        "--meadow-bg-y",
+        `${Math.round(clampedProgress * 24)}px`
+      );
+    };
+
+    const handleScroll = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(updateScrollParallax);
+    };
+
+    updateScrollParallax();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, []);
+
   const toggleService = (title) => {
     setExpandedService((currentService) =>
       currentService === title ? null : title
@@ -117,6 +161,43 @@ function App() {
 
   const toggleTimeline = (year) => {
     setExpandedTimeline((currentYear) => (currentYear === year ? null : year));
+  };
+
+  const handleContactPointerMove = (event) => {
+    const contactBand = contactBandRef.current;
+
+    if (!contactBand) {
+      return;
+    }
+
+    const rect = contactBand.getBoundingClientRect();
+    const pointerX = (event.clientX - rect.left) / rect.width - 0.5;
+    const pointerY = (event.clientY - rect.top) / rect.height - 0.5;
+
+    contactBand.style.setProperty(
+      "--meadow-pointer-x",
+      `${Math.round(pointerX * 34)}px`
+    );
+    contactBand.style.setProperty(
+      "--meadow-pointer-y",
+      `${Math.round(pointerY * 24)}px`
+    );
+    contactBand.style.setProperty(
+      "--meadow-bg-x",
+      `${Math.round(pointerX * 28)}px`
+    );
+  };
+
+  const handleContactPointerLeave = () => {
+    const contactBand = contactBandRef.current;
+
+    if (!contactBand) {
+      return;
+    }
+
+    contactBand.style.setProperty("--meadow-pointer-x", "0px");
+    contactBand.style.setProperty("--meadow-pointer-y", "0px");
+    contactBand.style.setProperty("--meadow-bg-x", "0px");
   };
 
   const handleContactSubmit = (event) => {
@@ -308,7 +389,13 @@ function App() {
         </div>
       </section>
 
-      <section className="contact-band" id="contacto">
+      <section
+        className="contact-band"
+        id="contacto"
+        ref={contactBandRef}
+        onPointerMove={handleContactPointerMove}
+        onPointerLeave={handleContactPointerLeave}
+      >
         <div>
           <p className="eyebrow">Consulta</p>
           <h2>Agenda una valoración quirúrgica.</h2>
