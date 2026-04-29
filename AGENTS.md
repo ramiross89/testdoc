@@ -82,6 +82,13 @@ El proyecto debe conservar tres pasos operativos:
 
 Solo `staging` y `production` son ambientes de CI/CD. `development` se ejecuta localmente con `npm run dev` y no debe desplegar nada.
 
+Regla al hacer pull del repo:
+
+- Después de hacer `git pull`, cualquier desarrollador debe comenzar trabajando en ambiente DEV.
+- El ambiente DEV se levanta con `npm run dev` o, si se quiere ser explícito, `npm run dev:development`.
+- Antes de cambiar a `staging` o `production`, primero validar localmente en DEV que la app abre y funciona.
+- No desarrollar directamente contra `staging` o `production`; esos ambientes son para revisión y publicación.
+
 Flujo obligatorio:
 
 ```text
