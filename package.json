@@ -1,10 +1,8 @@
 {
   "scripts": {
     "dev": "vite --host 0.0.0.0 --mode development",
-    "dev:development": "vite --host 0.0.0.0 --mode development",
     "dev:staging": "vite --host 0.0.0.0 --mode staging",
     "build": "vite build --mode production",
-    "build:development": "vite build --mode development",
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",
     "preview": "vite preview --host 0.0.0.0",
