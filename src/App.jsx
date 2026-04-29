@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const highlights = [
   { value: "18+", label: "años de experiencia" },
@@ -53,13 +53,86 @@ const appointments = [
   "Urgencias quirúrgicas: disponibilidad coordinada",
 ];
 
+const clinicSlides = [
+  {
+    src: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1200&q=85",
+    alt: "Consultorio médico moderno con sillones y luz natural",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=1200&q=85",
+    alt: "Sala clínica luminosa con equipo médico",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1200&q=85",
+    alt: "Área de consulta médica contemporánea",
+  },
+];
+
 function App() {
   const [expandedService, setExpandedService] = useState(null);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [formStatus, setFormStatus] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+  const [formStartedAt] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveSlide((currentSlide) => (currentSlide + 1) % clinicSlides.length);
+    }, 4200);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   const toggleService = (title) => {
     setExpandedService((currentService) =>
       currentService === title ? null : title
     );
+  };
+
+  const handleContactSubmit = (event) => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const values = Object.fromEntries(formData.entries());
+    const errors = {};
+    const elapsedTime = Date.now() - formStartedAt;
+
+    if (values.website) {
+      setFormStatus("spam");
+      return;
+    }
+
+    if (elapsedTime < 3000) {
+      setFormStatus("spam");
+      return;
+    }
+
+    if (!values.name.trim()) {
+      errors.name = "Escribe tu nombre.";
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+      errors.email = "Escribe un correo válido.";
+    }
+
+    if (!/^[0-9+\s()-]{8,}$/.test(values.phone.trim())) {
+      errors.phone = "Escribe un teléfono válido.";
+    }
+
+    if (!values.message.trim() || values.message.trim().length < 12) {
+      errors.message = "Cuéntanos brevemente el motivo de tu consulta.";
+    }
+
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      setFormStatus("error");
+      return;
+    }
+
+    setFormStatus("success");
+    form.reset();
   };
 
   return (
@@ -74,6 +147,9 @@ function App() {
           <a href="#trayectoria">Trayectoria</a>
           <a href="#contacto">Contacto</a>
         </div>
+        <a className="header-action" href="tel:+528112345678">
+          Agendar
+        </a>
       </nav>
 
       <section className="hero" id="inicio">
@@ -93,16 +169,15 @@ function App() {
             </a>
           </div>
         </div>
-        <aside className="profile-panel" aria-label="Resumen del médico">
-          <img
-            src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=900&q=85"
-            alt="Médico cirujano con bata en consultorio"
-          />
-          <div className="profile-info">
-            <span>Certificado por consejo</span>
-            <strong>Cirujano general</strong>
-            <p>Hospital Ángeles Valle Oriente · Monterrey, N.L.</p>
-          </div>
+        <aside className="clinic-carousel" aria-label="Consultorios médicos">
+          {clinicSlides.map((slide, index) => (
+            <img
+              className={index === activeSlide ? "active" : ""}
+              src={slide.src}
+              alt={slide.alt}
+              key={slide.src}
+            />
+          ))}
         </aside>
       </section>
 
@@ -186,6 +261,93 @@ function App() {
             consulta@dravarela.mx
           </a>
         </div>
+      </section>
+
+      <section className="contact-tools" aria-label="Mapa y formulario">
+        <div className="map-panel">
+          <iframe
+            title="Ubicación en Monterrey, México"
+            src="https://www.google.com/maps?q=Monterrey,%20Nuevo%20Le%C3%B3n,%20M%C3%A9xico&output=embed"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+
+        <form className="contact-form" onSubmit={handleContactSubmit} noValidate>
+          <div className="form-heading">
+            <p className="eyebrow">Contacto</p>
+            <h2>Envíanos tu caso.</h2>
+          </div>
+
+          <label>
+            Nombre completo
+            <input
+              type="text"
+              name="name"
+              autoComplete="name"
+              aria-invalid={Boolean(formErrors.name)}
+            />
+            {formErrors.name && <span>{formErrors.name}</span>}
+          </label>
+
+          <label>
+            Correo electrónico
+            <input
+              type="email"
+              name="email"
+              autoComplete="email"
+              aria-invalid={Boolean(formErrors.email)}
+            />
+            {formErrors.email && <span>{formErrors.email}</span>}
+          </label>
+
+          <label>
+            Teléfono
+            <input
+              type="tel"
+              name="phone"
+              autoComplete="tel"
+              aria-invalid={Boolean(formErrors.phone)}
+            />
+            {formErrors.phone && <span>{formErrors.phone}</span>}
+          </label>
+
+          <label className="spam-field" aria-hidden="true">
+            Sitio web
+            <input type="text" name="website" tabIndex="-1" autoComplete="off" />
+          </label>
+
+          <label>
+            Motivo de consulta
+            <textarea
+              name="message"
+              rows="5"
+              aria-invalid={Boolean(formErrors.message)}
+            />
+            {formErrors.message && <span>{formErrors.message}</span>}
+          </label>
+
+          {formStatus === "error" && (
+            <p className="form-status error">
+              Revisa los campos marcados antes de enviar.
+            </p>
+          )}
+          {formStatus === "spam" && (
+            <p className="form-status error">
+              No pudimos procesar el envío. Inténtalo de nuevo en unos segundos.
+            </p>
+          )}
+          {formStatus === "success" && (
+            <p className="form-status success">
+              Gracias. Tu mensaje está listo para ser enviado por el equipo de
+              atención.
+            </p>
+          )}
+
+          <button className="primary-action full" type="submit">
+            Enviar solicitud
+          </button>
+        </form>
       </section>
     </main>
   );
