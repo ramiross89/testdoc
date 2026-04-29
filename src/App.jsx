@@ -78,6 +78,8 @@ const appointments = [
   "Urgencias quirúrgicas: disponibilidad coordinada",
 ];
 
+const calendarWeekdays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
 const clinicSlides = [
   {
     src: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1200&q=85",
@@ -93,10 +95,68 @@ const clinicSlides = [
   },
 ];
 
+const formatDateId = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const formatReadableDate = (dateId) => {
+  const [year, month, day] = dateId.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  return new Intl.DateTimeFormat("es-MX", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+};
+
+const createAppointmentCalendar = () => {
+  const today = new Date();
+  const firstWeekday = today.getDay();
+
+  const emptyDays = Array.from({ length: firstWeekday }, (_, index) => ({
+    id: `empty-${index}`,
+    empty: true,
+  }));
+
+  const nextDates = Array.from({ length: 35 }, (_, index) => {
+    const date = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + index
+    );
+    const id = formatDateId(date);
+
+    return {
+      id,
+      day: date.getDate(),
+      month: new Intl.DateTimeFormat("es-MX", {
+        month: "short",
+      }).format(date),
+      available: index > 0 && date.getDay() !== 0,
+      isToday: id === formatDateId(today),
+    };
+  });
+
+  return {
+    label: "Próximas fechas",
+    days: [...emptyDays, ...nextDates],
+  };
+};
+
 function App() {
   const contactBandRef = useRef(null);
   const [expandedService, setExpandedService] = useState(null);
   const [expandedTimeline, setExpandedTimeline] = useState(null);
+  const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
+  const [selectedAppointmentDate, setSelectedAppointmentDate] = useState(null);
+  const [confirmedAppointmentDate, setConfirmedAppointmentDate] =
+    useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const [formStatus, setFormStatus] = useState(null);
   const [formErrors, setFormErrors] = useState({});
@@ -109,6 +169,26 @@ function App() {
 
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!appointmentModalOpen) {
+      return undefined;
+    }
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setAppointmentModalOpen(false);
+      }
+    };
+
+    document.body.classList.add("modal-open");
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.classList.remove("modal-open");
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [appointmentModalOpen]);
 
   useEffect(() => {
     const contactBand = contactBandRef.current;
@@ -244,6 +324,17 @@ function App() {
 
     setFormStatus("success");
     form.reset();
+  };
+
+  const calendar = createAppointmentCalendar();
+
+  const handleAcceptAppointmentDate = () => {
+    if (!selectedAppointmentDate) {
+      return;
+    }
+
+    setConfirmedAppointmentDate(selectedAppointmentDate);
+    setAppointmentModalOpen(false);
   };
 
   return (
@@ -409,11 +500,120 @@ function App() {
           {appointments.map((item) => (
             <p key={item}>{item}</p>
           ))}
-          <a className="primary-action full" href={contactLinks.email}>
+          {confirmedAppointmentDate && (
+            <p className="appointment-selection">
+              Fecha deseada: {formatReadableDate(confirmedAppointmentDate)}
+            </p>
+          )}
+          <button
+            className="primary-action full"
+            type="button"
+            onClick={() => setAppointmentModalOpen(true)}
+          >
+            Ver disponibilidad
+          </button>
+          <a className="secondary-action full" href={contactLinks.email}>
             {environment.contactEmail}
           </a>
         </div>
       </section>
+
+      {appointmentModalOpen && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setAppointmentModalOpen(false);
+            }
+          }}
+        >
+          <section
+            className="appointment-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="appointment-modal-title"
+          >
+            <div className="modal-heading">
+              <p className="eyebrow">Disponibilidad</p>
+              <h2 id="appointment-modal-title">Elige una fecha para tu cita.</h2>
+              <p>
+                Selecciona una fecha disponible. El equipo confirmará horario y
+                detalles por correo o teléfono.
+              </p>
+            </div>
+
+            <div className="availability-list" aria-label="Horarios disponibles">
+              {appointments.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
+
+            <div className="calendar-widget" aria-label="Calendario de citas">
+              <div className="calendar-header">
+                <strong>{calendar.label}</strong>
+                <span>Próximos 35 días</span>
+              </div>
+              <div className="calendar-weekdays" aria-hidden="true">
+                {calendarWeekdays.map((weekday) => (
+                  <span key={weekday}>{weekday}</span>
+                ))}
+              </div>
+              <div className="calendar-grid">
+                {calendar.days.map((day) =>
+                  day.empty ? (
+                    <span className="calendar-day empty" key={day.id} />
+                  ) : (
+                    <button
+                      className="calendar-day"
+                      type="button"
+                      key={day.id}
+                      disabled={!day.available}
+                      aria-pressed={selectedAppointmentDate === day.id}
+                      aria-label={
+                        day.available
+                          ? `Seleccionar ${formatReadableDate(day.id)}`
+                          : `${formatReadableDate(day.id)} no disponible`
+                      }
+                      data-today={day.isToday}
+                      onClick={() => setSelectedAppointmentDate(day.id)}
+                    >
+                      <span>{day.day}</span>
+                      <small>{day.month}</small>
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            <p className="modal-selection">
+              {selectedAppointmentDate
+                ? `Fecha seleccionada: ${formatReadableDate(
+                    selectedAppointmentDate
+                  )}`
+                : "Selecciona una fecha disponible para continuar."}
+            </p>
+
+            <div className="modal-actions">
+              <button
+                className="secondary-action"
+                type="button"
+                onClick={() => setAppointmentModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="primary-action"
+                type="button"
+                disabled={!selectedAppointmentDate}
+                onClick={handleAcceptAppointmentDate}
+              >
+                Aceptar
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <section className="contact-tools" aria-label="Mapa y formulario">
         <div className="map-panel">
