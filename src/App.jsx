@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { contactLinks, environment, mapConfig } from "./config/environment";
 
 const highlights = [
   { value: "18+", label: "años de experiencia" },
@@ -78,7 +79,7 @@ function App() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setActiveSlide((currentSlide) => (currentSlide + 1) % clinicSlides.length);
-    }, 4200);
+    }, environment.carouselIntervalMs);
 
     return () => window.clearInterval(interval);
   }, []);
@@ -103,7 +104,7 @@ function App() {
       return;
     }
 
-    if (elapsedTime < 3000) {
+    if (elapsedTime < environment.formMinSubmitMs) {
       setFormStatus("spam");
       return;
     }
@@ -147,7 +148,7 @@ function App() {
           <a href="#trayectoria">Trayectoria</a>
           <a href="#contacto">Contacto</a>
         </div>
-        <a className="header-action" href="tel:+528112345678">
+        <a className="header-action" href={contactLinks.phone}>
           Agendar
         </a>
       </nav>
@@ -161,7 +162,7 @@ function App() {
             quirúrgica segura y recuperación acompañada de principio a fin.
           </p>
           <div className="hero-actions" aria-label="Acciones principales">
-            <a className="primary-action" href="tel:+528112345678">
+            <a className="primary-action" href={contactLinks.phone}>
               Agendar valoración
             </a>
             <a className="secondary-action" href="#trayectoria">
@@ -257,8 +258,8 @@ function App() {
           {appointments.map((item) => (
             <p key={item}>{item}</p>
           ))}
-          <a className="primary-action full" href="mailto:consulta@dravarela.mx">
-            consulta@dravarela.mx
+          <a className="primary-action full" href={contactLinks.email}>
+            {environment.contactEmail}
           </a>
         </div>
       </section>
@@ -266,8 +267,8 @@ function App() {
       <section className="contact-tools" aria-label="Mapa y formulario">
         <div className="map-panel">
           <iframe
-            title="Ubicación en Monterrey, México"
-            src="https://www.google.com/maps?q=Monterrey,%20Nuevo%20Le%C3%B3n,%20M%C3%A9xico&output=embed"
+            title={mapConfig.title}
+            src={mapConfig.embedUrl}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />

@@ -22,8 +22,15 @@ Web app en React JS para el perfil profesional de un médico cirujano. El sitio 
 ├── src
 │   ├── App.jsx
 │   ├── App.css
+│   ├── config
+│   │   └── environment.js
 │   └── main.jsx
-└── SPECIFICATIONS.md
+├── .env.development
+├── .env.staging
+├── .env.production
+├── .env.example
+├── AGENTS.md
+└── README.md
 ```
 
 ## Instalación
@@ -52,6 +59,89 @@ También se expone a la red local porque el script usa:
 
 ```bash
 vite --host 0.0.0.0
+```
+
+## Ambientes
+
+El proyecto maneja tres ambientes con archivos `.env` específicos:
+
+```text
+.env.development
+.env.staging
+.env.production
+```
+
+También existe `.env.example` como plantilla pública. Los archivos `.env.local` y `.env.*.local` están ignorados por Git y deben usarse para valores privados o ajustes de una máquina específica.
+
+### Variables disponibles
+
+Todas las variables expuestas al frontend usan el prefijo `VITE_`, como requiere Vite:
+
+```text
+VITE_APP_ENV
+VITE_APP_URL
+VITE_SITE_NAME
+VITE_CONTACT_EMAIL
+VITE_CONTACT_PHONE
+VITE_MAPS_QUERY
+VITE_CAROUSEL_INTERVAL_MS
+VITE_FORM_MIN_SUBMIT_MS
+```
+
+Regla importante: no guardar secretos, tokens ni llaves privadas en variables `VITE_`, porque se incluyen en el bundle del navegador.
+
+### Development
+
+Uso local diario:
+
+```bash
+npm run dev
+npm run build:development
+```
+
+Este ambiente usa:
+
+```text
+VITE_APP_ENV=development
+VITE_APP_URL=http://localhost:5173
+```
+
+### Staging
+
+Uso para revisión previa a producción:
+
+```bash
+npm run dev:staging
+npm run build:staging
+```
+
+Este ambiente usa:
+
+```text
+VITE_APP_ENV=staging
+VITE_APP_URL=https://staging.dravarela.mx
+```
+
+### Production
+
+Uso para el build final:
+
+```bash
+npm run build
+npm run build:production
+```
+
+Este ambiente usa:
+
+```text
+VITE_APP_ENV=production
+VITE_APP_URL=https://dravarela.mx
+```
+
+La app centraliza la lectura de variables en:
+
+```text
+src/config/environment.js
 ```
 
 ## Build de producción
@@ -208,8 +298,8 @@ Comandos habituales:
 
 ```bash
 git status
-git add src/App.jsx src/App.css SPECIFICATIONS.md
-git commit -m "Update site documentation"
+git add .
+git commit -m "Update project"
 git push origin main
 ```
 
@@ -221,6 +311,8 @@ git push origin main
 node_modules/
 dist/
 .DS_Store
+.env.local
+.env.*.local
 ```
 
 No subir `node_modules` ni `dist` salvo que cambie la estrategia de despliegue.
@@ -231,5 +323,6 @@ No subir `node_modules` ni `dist` salvo que cambie la estrategia de despliegue.
 - Evitar mezclar lógica compleja en CSS; la interacción debe vivir en React.
 - Mantener cambios visuales dentro de `src/App.css`.
 - Mantener datos editables como arreglos en la parte superior de `src/App.jsx`.
+- Mantener configuración de ambientes en `src/config/environment.js` y archivos `.env.*`.
 - Ejecutar `npm run build` antes de hacer commit.
 - Probar visualmente en desktop y móvil cuando se cambien layouts.

@@ -30,6 +30,12 @@ Iniciar desarrollo:
 npm run dev
 ```
 
+Iniciar staging local:
+
+```bash
+npm run dev:staging
+```
+
 URL local esperada:
 
 ```text
@@ -42,6 +48,14 @@ Build de producción:
 npm run build
 ```
 
+Builds por ambiente:
+
+```bash
+npm run build:development
+npm run build:staging
+npm run build:production
+```
+
 Preview del build:
 
 ```bash
@@ -52,14 +66,47 @@ npm run preview
 
 - `src/App.jsx`: contenido, datos, estado e interacciones.
 - `src/App.css`: estilos, layout responsive y estados visuales.
+- `src/config/environment.js`: lectura centralizada de variables de ambiente.
 - `src/main.jsx`: montaje de React.
 - `index.html`: metadata base.
-- `SPECIFICATIONS.md`: documentación general del sitio.
+- `README.md`: documentación general del sitio y ambientes.
+- `AGENTS.md`: reglas obligatorias para agentes.
+
+## Ambientes
+
+El proyecto debe conservar tres ambientes:
+
+- `development`: trabajo local diario con `.env.development`.
+- `staging`: revisión previa a producción con `.env.staging`.
+- `production`: build final con `.env.production`.
+
+Solo usar variables públicas con prefijo `VITE_`. Nunca guardar secretos, tokens, llaves privadas o credenciales en archivos `.env` que se suban al repo, porque Vite expone esas variables al navegador.
+
+Variables actuales:
+
+```text
+VITE_APP_ENV
+VITE_APP_URL
+VITE_SITE_NAME
+VITE_CONTACT_EMAIL
+VITE_CONTACT_PHONE
+VITE_MAPS_QUERY
+VITE_CAROUSEL_INTERVAL_MS
+VITE_FORM_MIN_SUBMIT_MS
+```
+
+Reglas:
+
+- Mantener `.env.example` como plantilla.
+- Mantener `.env.local` y `.env.*.local` ignorados por Git.
+- Agregar nuevas variables primero a `.env.example` y después a cada ambiente.
+- Consumir variables desde `src/config/environment.js`, no directamente en componentes.
 
 ## Reglas de edición
 
 - Mantener el contenido en español con acentos correctos.
 - Ejecutar `npm run build` antes de finalizar cambios.
+- Para cambios de ambiente, ejecutar también `npm run build:staging` y `npm run build:production`.
 - Mantener cambios de UI en `src/App.jsx` y `src/App.css` salvo que el requerimiento pida otra cosa.
 - No subir ni editar manualmente `node_modules/` o `dist/`.
 - No reemplazar el stack actual sin una razón explícita.
@@ -187,6 +234,7 @@ Antes de push:
 
 ```bash
 npm run build
+npm run build:staging
 git status
 ```
 
