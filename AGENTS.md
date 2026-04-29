@@ -51,6 +51,7 @@ npm run build
 Builds por ambiente:
 
 ```bash
+npm run build:development
 npm run build:staging
 npm run build:production
 ```
@@ -71,14 +72,28 @@ npm run preview
 - `README.md`: documentación general del sitio y ambientes.
 - `AGENTS.md`: reglas obligatorias para agentes.
 
-## Ambientes
+## Ambientes Y Flujo
 
-El proyecto debe conservar dos ambientes formales:
+El proyecto debe conservar tres pasos operativos:
 
+- `development`: ambiente local predeterminado al abrir el proyecto.
 - `staging`: revisión previa a producción.
 - `production`: build final desde `main`.
 
-El desarrollo local se hace con `npm run dev`, pero no es un ambiente formal de despliegue.
+Solo `staging` y `production` son ambientes de CI/CD. `development` se ejecuta localmente con `npm run dev` y no debe desplegar nada.
+
+Flujo obligatorio:
+
+```text
+development/local -> staging -> main
+```
+
+Reglas de ramas:
+
+- El desarrollador trabaja localmente en `development` o en una rama de feature.
+- Solo se hace push a `staging` cuando se solicite específicamente.
+- Después de aprobar cambios en `staging`, se fusionan a `main` para producción.
+- `main` representa `production`.
 
 Solo usar variables públicas con prefijo `VITE_`. Nunca guardar secretos, tokens, llaves privadas o credenciales en archivos `.env` que se suban al repo, porque Vite expone esas variables al navegador.
 
@@ -97,7 +112,7 @@ VITE_FORM_MIN_SUBMIT_MS
 
 Reglas:
 
-- Mantener `.env.example` como plantilla.
+- Mantener `.env.example` como plantilla de desarrollo local.
 - Mantener todos los archivos `.env` reales ignorados por Git.
 - Agregar nuevas variables primero a `.env.example` y después al ambiente correspondiente en GitHub Actions.
 - Consumir variables desde `src/config/environment.js`, no directamente en componentes.
@@ -114,6 +129,7 @@ Reglas del pipeline:
 
 - Pull requests hacia `staging` deben ejecutar build de staging.
 - Pull requests hacia `main` deben ejecutar build de production.
+- Push a `development` no debe activar despliegues.
 - Push a `staging` usa el ambiente de GitHub Actions `staging`.
 - Push a `main` usa el ambiente de GitHub Actions `production`.
 - Los jobs deben usar `npm ci` y subir `dist/` como artifact.

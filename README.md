@@ -63,12 +63,15 @@ vite --host 0.0.0.0
 
 ## Ambientes
 
-El proyecto maneja dos ambientes formales:
+El proyecto maneja tres pasos operativos:
 
+- `development`: ambiente local predeterminado para abrir y trabajar el proyecto.
 - `staging`: revisión previa a producción.
 - `production`: build final publicado desde `main`.
 
-No se versionan archivos `.env` reales. Existe `.env.example` como plantilla pública, y cualquier archivo `.env` local queda ignorado por Git.
+Solo `staging` y `production` son ambientes de CI/CD. `development` vive en la máquina del desarrollador y no despliega nada.
+
+No se versionan archivos `.env` reales. Existe `.env.example` como plantilla pública para desarrollo local, y cualquier archivo `.env` local queda ignorado por Git.
 
 ### Variables disponibles
 
@@ -87,13 +90,37 @@ VITE_FORM_MIN_SUBMIT_MS
 
 Regla importante: no guardar secretos, tokens ni llaves privadas en variables `VITE_`, porque se incluyen en el bundle del navegador.
 
+### Development
+
+Al abrir el proyecto, el desarrollador debe trabajar en ambiente local:
+
+```bash
+npm run dev
+```
+
+Opcionalmente puede usar el alias explícito:
+
+```bash
+npm run dev:development
+```
+
+Este ambiente usa:
+
+```text
+VITE_APP_ENV=development
+VITE_APP_URL=http://localhost:5173
+```
+
+`development` es para trabajo local y no activa despliegues de GitHub Actions.
+
 ### Staging
 
-Uso para revisión previa a producción:
+Cuando el desarrollador lo requiera específicamente, sube sus cambios a `staging`:
 
 ```bash
 npm run dev:staging
 npm run build:staging
+git push origin HEAD:staging
 ```
 
 Este ambiente usa:
@@ -105,11 +132,14 @@ VITE_APP_URL=https://staging.dravarela.mx
 
 ### Production
 
-Uso para el build final:
+Después de aprobar cambios en `staging`, se promueven a producción fusionando hacia `main`:
 
 ```bash
 npm run build
 npm run build:production
+git checkout main
+git merge staging
+git push origin main
 ```
 
 Este ambiente usa:
@@ -125,13 +155,23 @@ La app centraliza la lectura de variables en:
 src/config/environment.js
 ```
 
-Para desarrollo local diario se usa:
+## Flujo De Ramas
 
-```bash
-npm run dev
+```text
+development/local -> staging -> main
 ```
 
-Ese comando levanta Vite con configuración local, pero no se considera un ambiente de despliegue formal.
+- `development`: trabajo local y commits de desarrollo. No debe activar despliegue.
+- `staging`: rama de revisión. Solo se actualiza cuando el desarrollador lo pide explícitamente.
+- `main`: rama de producción. Solo se actualiza después de aprobar los cambios en `staging`.
+
+Comandos recomendados:
+
+```bash
+git status
+npm run build:staging
+npm run build:production
+```
 
 ## CI/CD
 
@@ -151,6 +191,7 @@ Validaciones:
 - Pull requests hacia `staging` ejecutan `npm run build:staging`.
 - Pull requests hacia `main` ejecutan `npm run build:production`.
 - Los builds de ambiente suben el directorio `dist/` como artifact.
+- La rama `development` no dispara despliegues.
 
 Buenas prácticas:
 
