@@ -51,7 +51,6 @@ npm run build
 Builds por ambiente:
 
 ```bash
-npm run build:development
 npm run build:staging
 npm run build:production
 ```
@@ -74,11 +73,12 @@ npm run preview
 
 ## Ambientes
 
-El proyecto debe conservar tres ambientes:
+El proyecto debe conservar dos ambientes formales:
 
-- `development`: trabajo local diario con `.env.development`.
-- `staging`: revisión previa a producción con `.env.staging`.
-- `production`: build final con `.env.production`.
+- `staging`: revisión previa a producción.
+- `production`: build final desde `main`.
+
+El desarrollo local se hace con `npm run dev`, pero no es un ambiente formal de despliegue.
 
 Solo usar variables públicas con prefijo `VITE_`. Nunca guardar secretos, tokens, llaves privadas o credenciales en archivos `.env` que se suban al repo, porque Vite expone esas variables al navegador.
 
@@ -98,9 +98,27 @@ VITE_FORM_MIN_SUBMIT_MS
 Reglas:
 
 - Mantener `.env.example` como plantilla.
-- Mantener `.env.local` y `.env.*.local` ignorados por Git.
-- Agregar nuevas variables primero a `.env.example` y después a cada ambiente.
+- Mantener todos los archivos `.env` reales ignorados por Git.
+- Agregar nuevas variables primero a `.env.example` y después al ambiente correspondiente en GitHub Actions.
 - Consumir variables desde `src/config/environment.js`, no directamente en componentes.
+
+## CI/CD
+
+El workflow principal vive en:
+
+```text
+.github/workflows/ci-cd.yml
+```
+
+Reglas del pipeline:
+
+- Pull requests hacia `staging` deben ejecutar build de staging.
+- Pull requests hacia `main` deben ejecutar build de production.
+- Push a `staging` usa el ambiente de GitHub Actions `staging`.
+- Push a `main` usa el ambiente de GitHub Actions `production`.
+- Los jobs deben usar `npm ci` y subir `dist/` como artifact.
+- No agregar secretos al workflow ni a variables `VITE_`.
+- Si se conecta un proveedor de hosting, agregar el despliegue dentro del job del ambiente correspondiente.
 
 ## Reglas de edición
 

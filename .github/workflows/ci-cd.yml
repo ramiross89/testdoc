@@ -1,0 +1,142 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+  push:
+    branches:
+      - main
+      - staging
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: Environment to build
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-cd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Validate pull request
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for staging target
+        if: github.base_ref == 'staging'
+        run: npm run build:staging
+
+      - name: Build for production target
+        if: github.base_ref == 'main'
+        run: npm run build:production
+
+  staging:
+    name: Build staging
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/staging') ||
+      (github.event_name == 'workflow_dispatch' && inputs.target_environment == 'staging')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: staging
+    env:
+      VITE_APP_ENV: staging
+      VITE_APP_URL: https://staging.dravarela.mx
+      VITE_SITE_NAME: Dr. Alejandro Varela
+      VITE_CONTACT_EMAIL: consulta@dravarela.mx
+      VITE_CONTACT_PHONE: "+528112345678"
+      VITE_MAPS_QUERY: Monterrey, Nuevo León, México
+      VITE_CAROUSEL_INTERVAL_MS: "4200"
+      VITE_FORM_MIN_SUBMIT_MS: "3000"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build staging artifact
+        run: npm run build:staging
+
+      - name: Upload staging artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
+
+  production:
+    name: Build production
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.target_environment == 'production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+    env:
+      VITE_APP_ENV: production
+      VITE_APP_URL: https://dravarela.mx
+      VITE_SITE_NAME: Dr. Alejandro Varela
+      VITE_CONTACT_EMAIL: consulta@dravarela.mx
+      VITE_CONTACT_PHONE: "+528112345678"
+      VITE_MAPS_QUERY: Monterrey, Nuevo León, México
+      VITE_CAROUSEL_INTERVAL_MS: "4200"
+      VITE_FORM_MIN_SUBMIT_MS: "3000"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production artifact
+        run: npm run build:production
+
+      - name: Upload production artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 14
